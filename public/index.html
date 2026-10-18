@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ColorCue — Every Color Has a Clue</title>
+<meta name="theme-color" content="#1B2A4A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ColorCue">
+<style>
+:root{--bg:#F6F8FB;--card:#fff;--ink:#1B2A4A;--mut:#4d5a73;--blue:#0072B2;--gold:#D69A0B;--line:#d5dde8;--rad:20px}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1527;--card:#172139;--ink:#eef2fa;--mut:#b0bbd0;--blue:#56B4E9;--line:#2b3957}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 1.0625rem/1.5 Nunito,"Trebuchet MS","Segoe UI",system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:560px;margin:0 auto;padding:16px 18px 40px}
+h1,h2,h3,p{margin:0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.6rem;letter-spacing:-.01em}
+.brand svg{width:44px;height:44px}.brand b{color:var(--blue)}
+.tag{color:var(--mut);margin:4px 0 22px}
+h2{font-size:1.9rem;line-height:1.15;font-weight:800;margin-bottom:8px}
+.modes{display:grid;gap:12px;margin:20px 0}
+.mode{display:flex;gap:14px;align-items:center;text-align:left;width:100%;min-height:76px;padding:14px 18px;border:2px solid var(--line);border-radius:var(--rad);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.mode:hover{border-color:var(--blue)}
+.mode i{font-style:normal;font-size:2rem}
+.mode strong{display:block;font-size:1.2rem}.mode span{color:var(--mut);font-size:.95rem}
+button:focus-visible,input:focus-visible,.stage:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-wrap:wrap;gap:10px 22px;margin:6px 0 24px}
+.opts label{display:flex;gap:10px;align-items:center;min-height:44px;cursor:pointer}
+.opts input{width:24px;height:24px;accent-color:var(--blue)}
+.btn{min-height:50px;padding:0 22px;border-radius:14px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+[hidden]{display:none!important}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.stage{--ar:.75;position:relative;aspect-ratio:var(--ar);width:min(100%,calc(58vh*var(--ar)));margin:0 auto;border-radius:12px;background:#0b1224;touch-action:manipulation;cursor:crosshair}
+.stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:12px}
+.stage::before,.stage::after,.cr::before,.cr::after{content:"";position:absolute;width:34px;height:34px;border:7px solid var(--gold);z-index:2;pointer-events:none}
+.stage::before{top:-8px;left:-8px;border-right:0;border-bottom:0;border-radius:12px 0 0 0}
+.stage::after{bottom:-8px;right:-8px;border-left:0;border-top:0;border-radius:0 0 12px 0}
+.cr::before{top:-8px;right:-8px;border-left:0;border-bottom:0;border-radius:0 12px 0 0}
+.cr::after{bottom:-8px;left:-8px;border-right:0;border-top:0;border-radius:0 0 0 12px}
+.cr{position:absolute;inset:0;pointer-events:none}
+.ret{position:absolute;width:34px;height:34px;margin:-17px;border:4px solid #fff;border-radius:50%;box-shadow:0 0 0 3px #000,inset 0 0 0 3px #000;z-index:3;pointer-events:none}
+.card{background:var(--card);border:2px solid var(--line);border-radius:var(--rad);padding:16px 18px;margin-top:20px}
+.row{display:flex;gap:14px;align-items:center}
+.sw{width:52px;height:52px;border-radius:12px;border:3px solid var(--ink);flex:none}
+.big{font-size:1.7rem;font-weight:800;line-height:1.1}
+.mut{color:var(--mut);font-size:.95rem}
+.meter{height:16px;border-radius:9px;background:var(--line);overflow:hidden;margin:8px 0;border:2px solid var(--ink)}
+.meter div{height:100%;background:repeating-linear-gradient(45deg,var(--blue) 0 8px,var(--ink) 8px 12px)}
+ul{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:10px}
+li{display:flex;gap:12px;align-items:center}
+.warn{margin-top:12px;padding:10px 14px;border-left:6px solid var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent);border-radius:6px;font-size:.95rem}
+.hist li{justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px}
+#msg{margin-top:16px;color:#b3261e;font-weight:700}
+@media(prefers-color-scheme:dark){#msg{color:#ff9b93}}
+@media(prefers-reduced-motion:no-preference){.mode{transition:border-color .15s}}
+
+#intro{position:fixed;inset:0;overflow-y:auto;scroll-snap-type:y proximity;background:var(--bg);z-index:20}
+.pg{min-height:100svh;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:center;max-width:560px;margin:0 auto;padding:32px 20px}
+.pg.c{align-items:center;text-align:center}
+.logo{width:min(70vw,300px);height:auto}
+.word{font-size:2.8rem;font-weight:800;letter-spacing:-.02em;margin-top:6px}.word b{color:var(--blue)}
+.slog{font-size:1.2rem;color:var(--mut)}.hint{margin-top:36px;color:var(--mut);font-weight:700}
+.tc{background:var(--card);border:2px solid var(--line);border-radius:var(--rad);padding:14px 16px;margin-top:12px}
+.tc h3{font-size:1.15rem;margin-bottom:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{display:inline-flex;gap:6px;align-items:center;padding:4px 12px 4px 8px;border:2px solid var(--line);border-radius:99px;font-size:.92rem}
+.chip i{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.steps{counter-reset:s;padding:0;margin:16px 0 0;display:grid;gap:14px}
+.steps li::before{counter-increment:s;content:counter(s);flex:none;width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 18px}
+.tabs button{min-height:48px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-weight:800;font-size:.88rem;cursor:pointer}
+.tabs [aria-current=page]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cblock{height:96px;border-radius:14px;border:3px solid var(--ink);margin:14px 0}
+input[type=color]{width:58px;height:50px;padding:2px;border:2px solid var(--ink);border-radius:12px;background:var(--card);cursor:pointer}
+input[type=text],input[type=number]{width:100%;min-height:50px;padding:0 14px;border:2px solid var(--line);border-radius:12px;font:inherit;background:var(--bg);color:var(--ink)}
+dialog{width:min(92vw,460px);border:2px solid var(--line);border-radius:var(--rad);background:var(--card);color:var(--ink);padding:20px;font:inherit}
+dialog::backdrop{background:rgba(14,21,39,.65)}
+.fld{display:block;margin:14px 0 4px;font-weight:800}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:2px solid var(--line);border-radius:12px;margin-top:8px;cursor:pointer}
+.opt input{width:22px;height:22px;margin-top:3px;accent-color:var(--blue);flex:none}
+.opt:has(input:checked){border-color:var(--blue);background:color-mix(in srgb,var(--blue) 10%,transparent)}
+code{font:700 .95em ui-monospace,Consolas,monospace;background:var(--bg);padding:1px 6px;border-radius:6px}
+@media(prefers-reduced-motion:no-preference){
+.logo{animation:lg .8s cubic-bezier(.2,.9,.3,1.2) both}@keyframes lg{from{opacity:0;transform:scale(.7)}}
+.hint{animation:hb 1.6s ease-in-out infinite}@keyframes hb{50%{transform:translateY(7px)}}
+#intro.anim .pop:not(.shown){opacity:0;transform:translateY(26px) scale(.96)}
+#intro.anim .pop{transition:opacity .5s,transform .5s cubic-bezier(.2,.9,.3,1.2)}}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}</style>
+</head>
+<body>
+<div id="intro">
+<section class="pg c"><svg class="logo" viewBox="0 0 100 100" role="img" aria-label="Logo ColorCue"><g stroke="#1B2A4A" stroke-width="6"><circle cx="30" cy="52" r="19" fill="#DDE5EC"/><circle cx="70" cy="52" r="19" fill="#DDE5EC"/></g><path d="M16 52a14 14 0 0 1 14-14v14z" fill="#0072B2"/><path d="M30 38a14 14 0 0 1 14 14H30z" fill="#F0E442"/><path d="M56 52h14v14a14 14 0 0 1-14-14z" fill="#D55E00"/><path d="M70 52h14a14 14 0 0 1-14 14z" fill="#009E73"/><path d="M12 22h12M12 22v12M88 22H76M88 22v12M12 82h12M12 82V70M88 82H76M88 82V70" stroke="#D69A0B" stroke-width="5" stroke-linecap="round" fill="none"/></svg>
+<div class="word">Color<b>Cue</b></div><p class="slog">Every Color Has a Clue</p><p class="hint">Gulir ke bawah ⌄</p></section>
+<section class="pg"><h2 class="pop">Tentang ColorCue</h2>
+<div class="tc pop"><h3>Asal usul</h3><p>ColorCue berawal dari project kuliah: bagaimana kamera ponsel bisa membantu orang yang kesulitan membedakan warna di kehidupan sehari-hari.</p></div>
+<div class="tc pop"><h3>Mengapa dibuat</h3><p>Banyak informasi hanya disampaikan lewat warna: kabel, diagram, lampu indikator, kematangan buah. Tanpa label atau pola cadangan, informasi itu hilang bagi penyandang buta warna.</p></div>
+<div class="tc pop"><h3>Tujuan</h3><p>Mengubah informasi warna menjadi label, pola, nama, kode, dan suara, supaya setiap warna punya petunjuk yang bisa dipahami.</p></div></section>
+<section class="pg"><h2 class="pop">Jenis buta warna</h2><p class="mut pop">Sekitar 1 dari 12 pria dan 1 dari 200 wanita mengalami buta warna merah-hijau.</p><div id="types"></div></section>
+<section class="pg"><h2 class="pop">Cara kerja</h2><ol class="steps pop"><li>Masuk dan pilih jenis penglihatanmu.</li><li>Pilih yang ingin dikenali: buah, kabel, atau diagram.</li><li>Arahkan kamera, lalu ketuk titik yang ingin dibaca.</li><li>Baca nama warna, kode HEX, label, dan pola. Suara bisa diaktifkan.</li></ol></section>
+<section class="pg c"><h2 class="pop">Siap melihat warna dengan petunjuk?</h2><p class="mut pop" style="margin:8px 0 24px">Cukup nama, umur, dan jenis penglihatanmu.</p><button class="btn pri pop" id="cta" style="min-width:200px;font-size:1.15rem">Masuk</button></section>
+</div>
+<dialog id="login" aria-labelledby="lt"><form id="lf" method="dialog" novalidate><h2 id="lt">Masuk ke ColorCue</h2>
+<label class="fld" for="nm">Nama</label><input type="text" id="nm" name="nama" maxlength="40" autocomplete="given-name" required>
+<label class="fld" for="um">Umur</label><input type="number" id="um" name="umur" min="3" max="120" inputmode="numeric" required>
+<fieldset style="border:0;padding:0;margin:14px 0 0"><legend class="fld" style="padding:0">Jenis buta warna</legend><div id="opts"></div></fieldset>
+<p id="lerr" role="alert" style="color:#b3261e;font-weight:700"></p>
+<div class="bar" style="margin-top:14px"><button type="button" class="btn" id="lx">Batal</button><button type="submit" class="btn pri">Masuk</button></div></form></dialog>
+<main id="app" hidden>
+<div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#1B2A4A" stroke-width="6"><circle cx="30" cy="52" r="19" fill="#DDE5EC"/><circle cx="70" cy="52" r="19" fill="#DDE5EC"/></g><path d="M16 52a14 14 0 0 1 14-14v14z" fill="#0072B2"/><path d="M30 38a14 14 0 0 1 14 14H30z" fill="#F0E442"/><path d="M56 52h14v14a14 14 0 0 1-14-14z" fill="#D55E00"/><path d="M70 52h14a14 14 0 0 1-14 14z" fill="#009E73"/></svg><span>Color<b>Cue</b></span></div>
+<p class="tag">Every Color Has a Clue</p>
+
+<section id="home">
+  <p class="mut" id="hi"></p>
+  <nav class="tabs" aria-label="Menu utama"><button data-t="id">Identifikasi</button><button data-t="lib">Warna</button><button data-t="his">Riwayat</button><button data-t="prof">Profil</button></nav>
+  <div id="p-id">
+    <h2>Apa yang ingin kamu kenali?</h2>
+    <p class="mut">Pilih mode, arahkan kamera, dan ColorCue memberi nama warna, pola, dan penjelasan.</p>
+    <div class="modes">
+      <button class="mode" data-m="buah"><i aria-hidden="true">🍌</i><div><strong>Buah</strong><span>Perkiraan jenis dan kematangan dari warna</span></div></button>
+      <button class="mode" data-m="kabel"><i aria-hidden="true">🔌</i><div><strong>Kabel</strong><span>Bedakan kabel dengan label dan pola</span></div></button>
+      <button class="mode" data-m="diagram"><i aria-hidden="true">📊</i><div><strong>Diagram</strong><span>Setiap area warna diberi label dan pola</span></div></button>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="voice"> Bacakan nama warna</label>
+      <label><input type="checkbox" id="pat" checked> Tampilkan pola di kamera</label>
+    </div>
+    <p id="msg" role="alert"></p>
+  </div>
+  <div id="p-lib" hidden>
+    <h2>Pustaka warna</h2>
+    <p class="mut">Semua 16.777.216 warna RGB punya nama dan kode. Pilih warna, atau ketik kode HEX-nya.</p>
+    <div class="card"><div class="row"><input type="color" id="cp" value="#0072b2" aria-label="Pilih warna"><input type="text" id="hx" maxlength="7" value="#0072B2" aria-label="Kode warna HEX" autocapitalize="characters" spellcheck="false"><button class="btn" id="rnd">Acak</button></div>
+    <div class="cblock" id="cv"></div><div id="ci"></div></div>
+  </div>
+  <div id="p-his" hidden>
+    <p class="mut" id="hempty">Belum ada riwayat. Simpan hasil dari layar kamera, dan hasilnya muncul di sini.</p>
+    <div class="card" id="hbox" hidden style="margin-top:0"><div class="bar"><h3>Riwayat tersimpan</h3><button class="btn" id="hdel">Hapus</button></div><ul class="hist" id="hist"></ul></div>
+  </div>
+  <div id="p-prof" hidden>
+    <h2>Profil</h2>
+    <div class="card" style="margin-top:0"><p class="big" id="pn"></p><p class="mut" id="pt" style="font-weight:800"></p><p id="pd"></p><div class="chips" id="pc"></div></div>
+    <p class="mut" style="margin:12px 0">ColorCue tidak mendiagnosis buta warna. Untuk kepastian, periksakan ke dokter mata.</p>
+    <div class="bar" style="flex-wrap:wrap;justify-content:flex-start"><button class="btn" id="pe">Ubah profil</button><button class="btn pri" id="pw" hidden>Pasang aplikasi</button><button class="btn" id="po">Keluar</button></div>
+  </div>
+</section>
+
+<section id="scan" hidden>
+  <div class="bar"><button class="btn" id="back">‹ Kembali</button><h3 id="mt"></h3></div>
+  <div class="stage" id="stage" tabindex="0" aria-label="Pratinjau kamera. Ketuk atau gunakan tombol panah untuk memilih titik yang dibaca.">
+    <video id="v" playsinline muted></video><canvas id="ov"></canvas><div class="cr"></div><div class="ret" id="ret" style="left:50%;top:50%"></div>
+  </div>
+  <p class="mut" style="text-align:center;margin-top:10px">Ketuk layar untuk membaca warna di titik lain.</p>
+  <div class="card" id="res"></div><p class="sr" id="sr" aria-live="polite"></p>
+  <p id="msg2" role="alert" style="color:#b3261e;font-weight:700"></p>
+  <div class="bar" style="margin-top:16px"><span class="mut" id="saved"></span><button class="btn pri" id="save">Simpan hasil</button></div>
+</section>
+</main>
+
+<script>
+const $=s=>document.getElementById(s);
+const N=['Merah','Oranye','Kuning','Hijau','Biru','Ungu','Pink','Cokelat','Putih','Hitam','Abu-abu'];
+const HEX=['#d7263d','#f28c28','#f0e442','#2a9d58','#0072B2','#7b4fb3','#f06ba8','#7a4a2b','#ffffff','#111111','#888888'];
+const PN=['garis miring /','cincin','kotak-kotak','titik','garis datar','garis miring \\','silang','garis tegak','tanpa pola','tanpa pola','tanpa pola'];
+const PP=['M0 12L12 0','ring','chk','dot','M0 6H12','M0 0L12 12','M0 6H12M6 0V12','M6 0V12'];
+const MODE={buah:'Mode Buah',kabel:'Mode Kabel',diagram:'Mode Diagram'};
+const FRUIT={0:['Apel merah','Semangka (daging)'],1:['Jeruk','Mangga'],2:['Pisang','Mangga'],3:['Pisang mentah','Apel hijau','Semangka (kulit)']};
+const RIPE={0:[85,'tinggi'],1:[80,'tinggi'],2:[80,'tinggi'],3:[25,'rendah (masih hijau)']};
+const T={};let mode,stream,run=false,aw,ah,ow,oh,lab,sp={x:.5,y:.5},last={},lastSay=0,lastDom=-1;
+const ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+const mc=document.createElement('canvas'),mx=mc.getContext('2d'),tc=document.createElement('canvas'),tx=tc.getContext('2d');
+const v=$('v'),ov=$('ov'),ox=ov.getContext('2d');
+
+function tile(k){if(T[k])return T[k];const c=document.createElement('canvas');c.width=c.height=12;const x=c.getContext('2d'),P=PP[k];
+for(const[col,w]of[['#000',4.6],['#fff',2.2]]){x.strokeStyle=x.fillStyle=col;x.lineWidth=w;
+if(P=='dot'){x.beginPath();x.arc(6,6,w/1.7+1,0,7);x.fill()}
+else if(P=='chk'){const i=w>3?0:1.3;x.fillRect(i,i,6-2*i,6-2*i);x.fillRect(6+i,6+i,6-2*i,6-2*i)}
+else if(P=='ring'){x.beginPath();x.arc(6,6,3.4,0,7);x.stroke()}
+else x.stroke(new Path2D(P))}
+return T[k]=c}
+function swatch(k){const c=document.createElement('canvas');c.width=c.height=52;c.className='sw';const x=c.getContext('2d');
+x.fillStyle=HEX[k];x.fillRect(0,0,52,52);if(k<8){x.fillStyle=x.createPattern(tile(k),'repeat');x.fillRect(0,0,52,52)}return c}
+
+function cls(r,g,b){r/=255;g/=255;b/=255;const M=Math.max(r,g,b),m=Math.min(r,g,b),d=M-m,s=M?d/M:0;
+if(M<.2)return 9;if(s<.15)return M>.78?8:10;
+let h=M==r?60*(((g-b)/d)%6):M==g?60*((b-r)/d+2):60*((r-g)/d+4);if(h<0)h+=360;
+if(h<12||h>=345)return s<.45&&M>.7?6:M<.45?7:0;
+if(h<40)return M<.55?7:1;if(h<70)return 2;if(h<165)return 3;if(h<260)return 4;if(h<300)return 5;return 6}
+
+async function start(m){mode=m;$('msg').textContent='';
+if(!navigator.mediaDevices?.getUserMedia){$('msg').textContent='Browser ini tidak mendukung kamera. Buka lewat HTTPS atau localhost, lalu coba lagi.';return}
+try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false});}
+catch(e){$('msg').textContent=e.name=='NotAllowedError'?'Izin kamera ditolak. Aktifkan izin kamera di pengaturan browser, lalu pilih mode lagi.':'Kamera tidak ditemukan atau sedang dipakai aplikasi lain.';return}
+$('home').hidden=true;$('scan').hidden=false;$('mt').textContent=MODE[m];$('res').innerHTML='<p class="mut">Menyiapkan kamera…</p>';$('saved').textContent='';
+v.srcObject=stream;await v.play();
+const vw=v.videoWidth,vh=v.videoHeight,q=vw>vh?[160,Math.round(160*vh/vw)]:[Math.round(160*vw/vh),160];
+[aw,ah]=q;ow=aw*3;oh=ah*3;ac.width=mc.width=aw;ac.height=mc.height=ah;ov.width=tc.width=ow;ov.height=tc.height=oh;
+$('stage').style.setProperty('--ar',vw/vh);lab=new Uint8Array(aw*ah);run=true;tick()}
+function stop(){run=false;stream&&stream.getTracks().forEach(t=>t.stop());v.srcObject=null;$('scan').hidden=true;$('home').hidden=false;loadHist()}
+
+function tick(){if(!run)return;try{analyze()}catch(e){console.error(e);$('res').textContent='Gagal membaca kamera: '+e.message}setTimeout(tick,150)}
+function analyze(){ax.drawImage(v,0,0,aw,ah);const d=ax.getImageData(0,0,aw,ah).data,n=aw*ah,cnt=new Array(11).fill(0);
+for(let i=0;i<n;i++){const k=cls(d[i*4],d[i*4+1],d[i*4+2]);lab[i]=k;cnt[k]++}
+ox.clearRect(0,0,ow,oh);
+if($('pat').checked)for(let k=0;k<8;k++){if(cnt[k]/n<.03)continue;
+const im=mx.createImageData(aw,ah);for(let i=0;i<n;i++)if(lab[i]==k)im.data[i*4+3]=255;mx.putImageData(im,0,0);
+tx.globalCompositeOperation='source-over';tx.clearRect(0,0,ow,oh);tx.imageSmoothingEnabled=false;tx.drawImage(mc,0,0,ow,oh);
+tx.globalCompositeOperation='source-in';tx.fillStyle=tx.createPattern(tile(k),'repeat');tx.fillRect(0,0,ow,oh);ox.globalAlpha=.8;ox.drawImage(tc,0,0);ox.globalAlpha=1}
+const cx=Math.round(sp.x*(aw-1)),cy=Math.round(sp.y*(ah-1)),s=[0,0,0,0,0,0,0,0,0,0,0];let t=0,R=0,G=0,B=0;
+for(let y=Math.max(0,cy-2);y<=Math.min(ah-1,cy+2);y++)for(let x=Math.max(0,cx-2);x<=Math.min(aw-1,cx+2);x++){const p=(y*aw+x)*4;s[lab[y*aw+x]]++;t++;R+=d[p];G+=d[p+1];B+=d[p+2]}
+const dom=s.indexOf(Math.max(...s)),conf=Math.round(s[dom]/t*100);
+cur=[Math.round(R/t),Math.round(G/t),Math.round(B/t)];render(dom,conf,cnt,n);speak(dom)}
+
+function render(dom,conf,cnt,n){const R=$('res');R.textContent='';const hx=toHex(...cur),nm=nameColor(...cur);if(dom!=lastSR){lastSR=dom;$('sr').textContent='Warna '+nm+', pola '+PN[dom]}
+const top=document.createElement('div');top.className='row';top.append(swatch(dom));
+const tt=document.createElement('div');tt.innerHTML='<div class="big">'+N[dom]+'</div><div class="mut">Pola: '+PN[dom]+' · keyakinan '+conf+'%</div><div style="margin-top:4px"><b>'+nm+'</b> <code>'+hx+'</code></div>';top.append(tt);R.append(top);
+let detail=N[dom];
+if(mode=='buah'){const f=FRUIT[dom],r=RIPE[dom];
+R.insertAdjacentHTML('beforeend',f?'<p style="margin-top:12px"><b>Kemungkinan:</b> '+f.join(', ')+'</p><div class="meter" role="img" aria-label="Kematangan visual '+r[0]+' persen"><div style="width:'+r[0]+'%"></div></div><p>Indikasi kematangan visual: <b>'+r[1]+'</b> ('+r[0]+'%)</p>':'<p style="margin-top:12px">Arahkan titik bidik ke kulit buah agar bisa dikenali.</p>');
+R.insertAdjacentHTML('beforeend','<div class="warn">Ini perkiraan dari warna saja. Kamera tidak bisa menilai tekstur, aroma, atau rasa.</div>');
+detail=f?f[0]+' · kematangan visual '+r[1]:'Tidak dikenali'}
+else{const ks=[...Array(8).keys()].filter(k=>cnt[k]/n>=.03).sort((a,b)=>cnt[b]-cnt[a]).slice(0,6),u=document.createElement('ul');
+ks.forEach((k,i)=>{const li=document.createElement('li');li.append(swatch(k));const d=document.createElement('div');d.innerHTML='<b>'+(mode=='diagram'?(i+1)+'. ':'')+N[k]+'</b> <span class="mut">'+Math.round(cnt[k]/n*100)+'% layar</span><br><span class="mut">Pola: '+PN[k]+'</span>';li.append(d);u.append(li)});
+R.append(ks.length?u:Object.assign(document.createElement('p'),{className:'mut',textContent:'Belum ada warna dominan. Dekatkan kamera ke objek.'}));
+if(mode=='kabel')R.insertAdjacentHTML('beforeend','<div class="warn">Hanya untuk identifikasi visual. Jangan jadikan warna kabel sebagai acuan keselamatan listrik.</div>');
+detail=ks.map(k=>N[k]).join(', ')||'-'}
+hint(R,dom);last={mode,color:N[dom]+' '+hx,detail}}
+function speak(dom){if(!$('voice').checked||!window.speechSynthesis||dom==lastDom||Date.now()-lastSay<1500)return;lastDom=dom;lastSay=Date.now();
+const u=new SpeechSynthesisUtterance('Warna terdeteksi '+N[dom]);u.lang='id-ID';speechSynthesis.cancel();speechSynthesis.speak(u)}
+
+$('stage').addEventListener('click',e=>{const b=$('stage').getBoundingClientRect();sp={x:(e.clientX-b.left)/b.width,y:(e.clientY-b.top)/b.height};
+$('ret').style.left=sp.x*100+'%';$('ret').style.top=sp.y*100+'%'});
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>start(b.dataset.m));
+$('back').onclick=stop;
+
+let id;try{id=localStorage.getItem('cc_id');if(!id){id='cc-'+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('cc_id',id)}}catch{id='cc-'+Math.random().toString(36).slice(2,12)}
+$('save').onclick=async()=>{try{const r=await fetch('/api/scans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:id,...last})});$('saved').textContent=r.ok?'Tersimpan ✓':'Gagal menyimpan';}catch{$('saved').textContent='Server tidak terhubung'}};
+async function loadHist(){try{const r=await fetch('/api/scans?device='+id);if(!r.ok)return;const a=await r.json();$('hbox').hidden=!a.length;$('hempty').hidden=!!a.length;
+$('hist').innerHTML='';a.forEach(s=>{const li=document.createElement('li');li.innerHTML='<span><b></b> <span class="mut"></span></span><span class="mut"></span>';
+li.querySelector('b').textContent=s.color;li.querySelector('.mut').textContent=s.detail;li.lastChild.textContent=MODE[s.mode].replace('Mode ','');$('hist').append(li)})}catch{}}
+$('hdel').onclick=async()=>{try{await fetch('/api/scans?device='+id,{method:'DELETE'})}catch{}loadHist()};
+loadHist();
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+
+/* ===== Nama & kode untuk 16.777.216 warna ===== */
+let cur=[0,0,0],P=null;
+const toHex=(r,g,b)=>'#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
+function hsl(r,g,b){r/=255;g/=255;b/=255;const M=Math.max(r,g,b),m=Math.min(r,g,b),l=(M+m)/2,d=M-m;let h=0,s=0;
+if(d){s=d/(1-Math.abs(2*l-1));h=M==r?60*(((g-b)/d+6)%6):M==g?60*((b-r)/d+2):60*((r-g)/d+4)}return[h,s,l]}
+const HF=[[15,'Merah'],[40,'Jingga'],[65,'Kuning'],[90,'Hijau Limau'],[150,'Hijau'],[185,'Hijau Toska'],[195,'Sian'],[225,'Biru Langit'],[255,'Biru'],[275,'Nila'],[300,'Ungu'],[330,'Magenta'],[350,'Merah Jambu'],[361,'Merah']];
+function nameColor(r,g,b){const[h,s,l]=hsl(r,g,b);if(l<.05)return'Hitam';if(l>.97)return'Putih';
+if(s<.08)return l<.2?'Abu-abu Arang':l<.4?'Abu-abu Tua':l<.65?'Abu-abu':l<.85?'Abu-abu Muda':'Putih Keabu-abuan';
+let f=HF.find(x=>h<x[0])[1];if(h>=10&&h<50&&(l<.34||(s<.6&&l<.5)))f='Cokelat';if((h<10||h>=350)&&l<.32&&s>.4)f='Marun';
+const L=l<.18?'Sangat Gelap':l<.34?'Gelap':l>.86?'Sangat Terang':l>.68?'Terang':'',S=s<.25?'Pudar':s<.5?'Lembut':s>.85&&l>.35&&l<.65?'Pekat':'';
+return[f,L,S].filter(Boolean).join(' ')}
+function lib(v){const m=/^#?([0-9a-f]{6})$/i.exec(v.trim());if(!m)return;const n=parseInt(m[1],16),r=n>>16,g=n>>8&255,b=n&255,[h,s,l]=hsl(r,g,b),k=cls(r,g,b),H=toHex(r,g,b);
+$('cv').style.background=H;$('cp').value=H.toLowerCase();
+$('ci').innerHTML='<p class="big">'+nameColor(r,g,b)+'</p><p><code>'+H+'</code> <code>RGB('+r+', '+g+', '+b+')</code></p><p class="mut">HSL '+Math.round(h)+'°, '+Math.round(s*100)+'%, '+Math.round(l*100)+'% · warna ke-'+(n+1).toLocaleString('id-ID')+' dari 16.777.216</p><p>Kelompok pola: <b>'+N[k]+'</b>, '+PN[k]+'</p>'}
+$('hx').oninput=e=>lib(e.target.value);$('cp').oninput=e=>{$('hx').value=e.target.value.toUpperCase();lib(e.target.value)};
+$('rnd').onclick=()=>{const H=toHex(...[0,0,0].map(()=>Math.floor(Math.random()*256)));$('hx').value=H;lib(H)};
+
+/* ===== Pengenalan, masuk, profil ===== */
+const TY=[
+['protan','Protanopia','Sulit melihat merah. Merah tampak gelap dan mudah tertukar dengan hijau atau cokelat.',['Merah','Hijau','Cokelat','Hitam']],
+['deutan','Deuteranopia','Sulit melihat hijau, jenis yang paling umum. Hijau, merah, dan oranye tampak mirip.',['Hijau','Merah','Cokelat','Oranye']],
+['tritan','Tritanopia','Sulit membedakan biru dan kuning. Biru tampak kehijauan, kuning tampak keunguan. Sangat langka.',['Biru','Hijau','Kuning','Ungu']],
+['achro','Achromatopsia','Tidak melihat warna sama sekali, hanya hitam, putih, dan abu-abu. Sangat langka.',[]],
+['unsure','Tidak tahu','Tidak masalah. Semua warna tetap diberi label dan pola.',[]]];
+const chips=a=>a.map(n=>'<span class="chip"><i style="background:'+HEX[N.indexOf(n)]+'"></i>'+n+'</span>').join('');
+$('types').innerHTML=TY.slice(0,4).map(t=>'<div class="tc pop"><h3>'+t[1]+'</h3><p>'+t[2]+'</p>'+(t[3].length?'<div class="chips" aria-label="Warna yang sulit dibedakan">'+chips(t[3])+'</div>':'<p class="mut">Semua warna tampak abu-abu.</p>')+'</div>').join('');
+$('opts').innerHTML=TY.map(t=>'<label class="opt"><input type="radio" name="jenis" value="'+t[0]+'"'+(t[0]=='unsure'?' checked':'')+'><span><b>'+t[1]+'</b><br><span class="mut">'+(t[3].length?t[3].slice(0,2).join(' dan ')+' sulit dibedakan':t[0]=='unsure'?'Pilih ini jika belum pernah tes':'Tidak melihat warna')+'</span></span></label>').join('');
+$('intro').classList.add('anim');
+const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('shown')),{root:$('intro'),threshold:.2});
+document.querySelectorAll('.pop').forEach(x=>io.observe(x));
+try{P=JSON.parse(localStorage.getItem('cc_p')||'null')}catch{}
+function tab(t){['id','lib','his','prof'].forEach(k=>$('p-'+k).hidden=k!=t);
+document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.t==t?'page':'false'));
+if(t=='his')loadHist();if(t=='lib')lib($('hx').value)}
+function enter(){$('intro').hidden=true;$('app').hidden=false;$('hi').textContent='Halo, '+P.nama+'!';
+const t=TY.find(x=>x[0]==P.jenis)||TY[4];$('pn').textContent=P.nama+', '+P.umur+' tahun';$('pt').textContent=t[1];$('pd').textContent=t[2];$('pc').innerHTML=chips(t[3]);if(P.jenis=='achro')$('voice').checked=true;$('pat').checked=true;tab('id');scrollTo(0,0)}
+function openLogin(){const f=$('lf');f.nama.value=P?P.nama:'';f.umur.value=P?P.umur:'';$('lerr').textContent='';
+const r=f.querySelector('input[name=jenis][value='+(P?P.jenis:'unsure')+']');if(r)r.checked=true;$('login').showModal()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+$('cta').onclick=openLogin;$('pe').onclick=openLogin;$('lx').onclick=()=>$('login').close();
+$('po').onclick=()=>{P=null;try{localStorage.removeItem('cc_p')}catch{}$('app').hidden=true;$('intro').hidden=false;$('intro').scrollTop=0};
+$('lf').onsubmit=e=>{e.preventDefault();const f=e.target,nama=f.nama.value.trim(),umur=Math.round(+f.umur.value);
+if(!nama||!(umur>=3&&umur<=120)){$('lerr').textContent='Isi nama dan umur (3–120 tahun).';return}
+P={nama:nama.slice(0,40),umur,jenis:f.jenis.value||'unsure'};try{localStorage.setItem('cc_p',JSON.stringify(P))}catch{}
+$('login').close();enter()};
+let lastSR=-1,dp;
+function hint(R,dom){const t=P&&TY.find(x=>x[0]==P.jenis);if(t&&t[3].includes(N[dom]))R.insertAdjacentHTML('beforeend','<div class="warn">Untuk '+t[1]+', '+N[dom]+' sering tertukar dengan '+t[3].filter(x=>x!=N[dom]).join(', ')+'. Andalkan label dan pola.</div>')}
+function mv(x,y){sp={x:Math.min(1,Math.max(0,x)),y:Math.min(1,Math.max(0,y))};$('ret').style.left=sp.x*100+'%';$('ret').style.top=sp.y*100+'%'}
+$('stage').addEventListener('keydown',e=>{const d={ArrowLeft:[-.05,0],ArrowRight:[.05,0],ArrowUp:[0,-.05],ArrowDown:[0,.05]}[e.key];if(d){e.preventDefault();mv(sp.x+d[0],sp.y+d[1])}});
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('pw').hidden=false});
+$('pw').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$('pw').hidden=true}};
+if(P&&P.nama)enter();
+</script>
+</body>
+</html>
